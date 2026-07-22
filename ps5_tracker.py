@@ -1,16 +1,17 @@
 import time
 import requests
+import threading
+import os
 from bs4 import BeautifulSoup
+from flask import Flask
 
 # --- YOUR CREDENTIALS ---
 TELEGRAM_BOT_TOKEN = "8732648482:AAHqU0b9EpZWvLTKaaWMpmjAPs2Db6cMFT8"
 TELEGRAM_CHAT_ID = "7700368660" 
 PINCODE = "110018"
 
-# Your new Proxy IP and Port
 PROXY_URL = "http://45.168.238.193:8443"
 
-# Dictionary mapping protocol to the URL of the proxy
 PROXIES = {
     "http": PROXY_URL,
     "https": PROXY_URL
@@ -30,6 +31,18 @@ COOKIES = {
     "pincode": PINCODE
 }
 
+# --- FLASK WEB SERVER FOR UPTIMEROBOT ---
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "PS5 Bot is awake and running!"
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
+
+# --- BOT LOGIC ---
 def send_telegram_alert(message):
     telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     try:
@@ -40,7 +53,6 @@ def send_telegram_alert(message):
 def check_stock():
     print(f"Checking Flipkart stock through proxy {PROXY_URL}...")
     try:
-        # Pinging Flipkart using your proxy
         response = requests.get(
             PRODUCT_URL, 
             headers=HEADERS, 
@@ -72,8 +84,12 @@ def check_stock():
     return False
 
 if __name__ == "__main__":
+    # Start the dummy website in the background
+    server_thread = threading.Thread(target=run_web_server)
+    server_thread.start()
+    
     print("Starting PS5 proxy tracker...")
-    send_telegram_alert("✅ Cloud server is now monitoring Flipkart via proxy 45.168.238.193!")
+    send_telegram_alert("✅ Cloud server is now monitoring Flipkart and ready for UptimeRobot!")
     
     while True:
         in_stock = check_stock()
